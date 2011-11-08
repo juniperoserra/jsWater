@@ -1,0 +1,10 @@
+I wrote a small iPhone app a little while ago called FireWater, for which I developed a simple pressure-based fluid simulation.
+
+I thought it would be fun to port it to the HTML5 Canvas in Javascript to learn the Canvas myself and teach a little about writing simulations.
+That's jsWater.
+
+If your browser supports HTML5 canvas, but the canvas above is not filled with black, please refresh your browser.
+
+Once you have a black canvas, click and drag on it to see it in action.
+
+You can see it in action at <a href="http://upfork.com/articles/2011/11/javascript-fluid-simulation-for-html5-canvas/">UpFork!</a>

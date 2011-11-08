@@ -1,0 +1,82 @@
+/**
+ * jsWater pressure-based fluid simulation v0.01
+ * http://www.upfork.com/
+ * Copyright 2011, Simon Greenwold
+ * Licensed under the MIT or GPL Version 2 licenses.
+ * Date: November 3 2011
+ *
+ * Copyright (C) 2011 by Simon Greenwold
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+ 
+ var inline_js_water = function inlineJsWater() {
+  var stage = new Stage("myCanvas");
+  var canvas = stage.getCanvas();
+  var context = stage.getContext();
+  var width = canvas.width;
+  var height = canvas.height;
+  var fluidApp = fluid_app_maker( context, 2000, 30, 30, width, height );
+
+  // globals needed for drag and drop
+  var dd = {
+    mouseX: 0,
+    mouseY: 0,
+    lastMouseX: 0,
+    lastMouseY: 0,
+    isDragging: false
+  };
+
+  canvas.addEventListener("mouseup", function() {
+    dd.isDragging = false;
+    //dd.mouseOffsetX = 0;
+    //dd.mouseOffsetY = 0;
+    }, false);
+    
+  canvas.addEventListener("mousedown", function() {
+    dd.isDragging = true;
+    var mousePos = stage.getMousePos();
+    fluidApp.mouseDown(mousePos.x / width, mousePos.y / height, 0, 0);
+    //dd.mouseOffsetX = 0;
+    //dd.mouseOffsetY = 0;
+    }, false);
+
+  stage.setDrawStage(function() {
+
+    var mousePos = stage.getMousePos();
+    if (dd.isDragging && mousePos != null)
+    {
+      fluidApp.mouseDrag( mousePos.x / width, mousePos.y / height, 0 );
+    }
+
+    // update ball
+    var d = new Date();
+    fluidApp.idle(d.getTime());
+
+    // clear canvas
+    //this.clear();
+
+
+    // draw ball
+    fluidApp.draw();
+  });
+
+  stage.startAnimation();
+
+};
