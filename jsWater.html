@@ -10,16 +10,24 @@
     border: 1px solid #989898;
   }
   </style>
-  <script src="Stage.js"></script>
-  <script src="mouseDragTracker.js"></script>
-  <script src="jsWater.js"></script>
-  <script src="jsWaterApp.js"></script>
-  <script src="jsWaterInline.js"></script>
+  <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="Stage.js"></script>
+  <script type="text/javascript" src="mouseDragTracker.js"></script>
+  <script type="text/javascript" src="jsWater.js"></script>
+  <script type="text/javascript" src="jsWaterApp.js"></script>
+  <script type="text/javascript" src="jsWaterInline.js"></script>
   <script>
-  window.onload = inline_js_water;
+  $(document).ready( function() {
+    var jsWater = inline_js_water();
+    $('#showFps').click(function() {
+      jsWater.showFps = this.checked;
+    });
+    
+  });
   </script>
   </head>
   <body onmousedown="return false;">
-    <canvas id="myCanvas" width="600" height="600"></canvas>
+    <canvas id="myCanvas" width="600" height="600"></canvas><br/>
+    <input id="showFps" type="checkbox" name="showFps"/>Show FPS
   </body>
   </html>
