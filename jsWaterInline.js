@@ -33,6 +33,10 @@
   var width = canvas.width;
   var height = canvas.height;
   var fluidApp = fluid_app_maker( context, 2000, 30, 30, width, height );
+  var lastDisplayTime = 0;
+  var displayFps = 0;
+  var avgFps = 0;
+  var dragTracker = create_drag_tracker("myCanvas");
 
   // globals needed for drag and drop
   var dd = {
@@ -60,7 +64,7 @@
   stage.setDrawStage(function() {
 
     var mousePos = stage.getMousePos();
-    if (dd.isDragging && mousePos != null)
+    if (dragTracker.isDraggingLeftButton() && mousePos != null)
     {
       fluidApp.mouseDrag( mousePos.x / width, mousePos.y / height, 0 );
     }
@@ -72,9 +76,17 @@
     // clear canvas
     //this.clear();
 
+    avgFps = (avgFps * 14 + stage.getFps()) / 15;
+    if (stage.getTime() > lastDisplayTime + 500)
+    {
+      lastDisplayTime = stage.getTime();
+      displayFps = avgFps.toFixed(1);
+    }
 
     // draw ball
     fluidApp.draw();
+    context.fillStyle = "#ffffff"; // text color
+    context.fillText("FPS: " + displayFps, 10, 10 );
   });
 
   stage.startAnimation();
