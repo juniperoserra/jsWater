@@ -37,7 +37,8 @@
   var displayFps = 0;
   var avgFps = 0;
   var dragTracker = create_drag_tracker("myCanvas");
-
+  var jswater = {};
+  
   // globals needed for drag and drop
   var dd = {
     mouseX: 0,
@@ -85,10 +86,17 @@
 
     // draw ball
     fluidApp.draw();
-    context.fillStyle = "#ffffff"; // text color
-    context.fillText("FPS: " + displayFps, 10, 10 );
+    if (jswater.showFps)
+    {
+      context.fillStyle = "#ffffff"; // text color
+      context.fillText("FPS: " + displayFps, 10, 10 );
+    }
   });
 
   stage.startAnimation();
-
+  
+  // public API
+  jswater.showFps = false;
+  
+  return jswater;
 };
