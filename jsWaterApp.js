@@ -46,6 +46,7 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
   var H = height;
   var particlesArrayLen = N_PARTICLES*4;
   var particles = new Array(particlesArrayLen); //[4];  // 4 values: last position, current position
+  var particleFlows = new Array(particlesArrayLen); //[4];  // 4 values: last position, current position
   var epoch;
   var mouseVelocities = [];
   var mousePreviousPositions = [];
@@ -70,6 +71,11 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
         particles[i+Y0] = y;
         particles[i+X1] = x;
         particles[i+Y1] = y;
+        
+        particleFlows[i+X0] = 0;
+        particleFlows[i+Y0] = 0;
+        particleFlows[i+X1] = 0;
+        particleFlows[i+Y1] = 0;
       }
     }
 
@@ -154,22 +160,27 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
             particles[i+Y0] = fY;
             particles[i+X1] = fX;
             particles[i+Y1] = fY;
+            
+            particleFlows[i+X0] = 0;
+            particleFlows[i+Y0] = 0;
+            particleFlows[i+X1] = 0;
+            particleFlows[i+Y1] = 0;
           }
           else
           {
             particles[i+X0] = particles[i+X1];
             particles[i+Y0] = particles[i+Y1];
+            
+            //particleFlows[i+X0] = particleFlows[i+X1];
+            //particleFlows[i+Y0] = particleFlows[i+Y1];
 
-            var flow = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
+            var flow0 = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
+            particles[i+X1] = particles[i+X1] + flow0[0];
+            particles[i+Y1] = particles[i+Y1] + flow0[1];
             
-            if (flow[0] != flow[0] || flow[1] != flow[1])
-            {
-              var ISNAN = true;
-            }
-            flow = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
-            
-            particles[i+X1] = particles[i+X1] + flow[0];
-            particles[i+Y1] = particles[i+Y1] + flow[1];
+            var flow1 = fluid.sampleFlow(particles[i+X1], particles[i+Y1]);
+            particleFlows[i+X1] = flow1[0];
+            particleFlows[i+Y1] = flow1[1];
           }
         }
       }
@@ -177,7 +188,7 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
   };
 
   my.draw = function() {
-    context.fillStyle = 'rgba(0,0,0,0.2)';
+    context.fillStyle = 'rgba(0,0,0,0.15)';
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
     
     if (drawParticles) {
@@ -185,7 +196,19 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
       context.lineWidth = 1;
       for (var i = 0; i < particlesArrayLen; i = i + 4) {
         context.moveTo(particles[i+X0] * W, particles[i+Y0] * H);
-        context.lineTo(particles[i+X1] * W, particles[i+Y1] * H);
+        //context.lineTo(particles[i+X1] * W, particles[i+Y1] * H);
+        
+        var midX = particleFlows[i+X0] - particleFlows[i+X1];
+        var midY = particleFlows[i+Y0] - particleFlows[i+Y1];
+        
+        var avgX = (particles[i+X0] + particles[i+X1])/2;
+        var avgY = (particles[i+Y0] + particles[i+Y1])/2;
+        
+        context.quadraticCurveTo(
+          (avgX + midX / 4) * W, (avgY + midY / 4) * H,
+          particles[i+X1] * W, particles[i+Y1] * H
+        );
+        
       }
       
       var hue = hue + 10 * Math.random();
