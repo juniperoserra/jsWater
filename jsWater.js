@@ -384,7 +384,7 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
   }
   
   my.sampleFlow = function ( x, y ) {
-    var sampleX = (x+1) * FLUID_CELLS_X - 0.5;
+    var sampleX = (x+1) * FLUID_CELLS_X;
     while (sampleX > FLUID_CELLS_X) {
       sampleX = sampleX - FLUID_CELLS_X;
     }
@@ -393,7 +393,7 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
     var baseX = Math.floor(sampleX);
     var fracX = sampleX - baseX;
     
-    var sampleY = (y+1) * FLUID_CELLS_Y - 0.5;
+    var sampleY = (y+1) * FLUID_CELLS_Y;
     while (sampleY > FLUID_CELLS_Y) {
       sampleY = sampleY - FLUID_CELLS_Y;
     }
