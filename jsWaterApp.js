@@ -47,6 +47,7 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
   var particlesArrayLen = N_PARTICLES*4;
   var particles = new Array(particlesArrayLen); //[4];  // 4 values: last position, current position
   var particleFlows = new Array(particlesArrayLen); //[4];  // 4 values: last position, current position
+  var particleMasses = new Array(N_PARTICLES);
   var epoch;
   var mouseVelocities = [];
   var mousePreviousPositions = [];
@@ -56,6 +57,12 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
   var Y0 = 1;
   var X1 = 2;
   var Y1 = 3;
+
+  function randomMass()
+  {
+    return Math.random() + 1;
+    //return 1;
+  }
 
   function initFluid()
   {
@@ -76,6 +83,8 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
         particleFlows[i+Y0] = 0;
         particleFlows[i+X1] = 0;
         particleFlows[i+Y1] = 0;
+        
+        particleMasses[i/4] =  randomMass();
       }
     }
 
@@ -165,6 +174,8 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
             particleFlows[i+Y0] = 0;
             particleFlows[i+X1] = 0;
             particleFlows[i+Y1] = 0;
+            
+            particleMasses[i/4] = randomMass();
           }
           else
           {
@@ -175,12 +186,12 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
             //particleFlows[i+Y0] = particleFlows[i+Y1];
 
             var flow0 = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
-            particles[i+X1] = particles[i+X1] + flow0[0];
-            particles[i+Y1] = particles[i+Y1] + flow0[1];
+            particles[i+X1] = particles[i+X1] + flow0[0] / particleMasses[i/4];
+            particles[i+Y1] = particles[i+Y1] + flow0[1] / particleMasses[i/4];
             
             var flow1 = fluid.sampleFlow(particles[i+X1], particles[i+Y1]);
-            particleFlows[i+X1] = flow1[0];
-            particleFlows[i+Y1] = flow1[1];
+            particleFlows[i+X1] = flow1[0] / particleMasses[i/4];
+            particleFlows[i+Y1] = flow1[1] / particleMasses[i/4];
           }
         }
       }

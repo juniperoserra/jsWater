@@ -72,14 +72,6 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
       SE : 7
   };
 
-  function isNaNDebug(num) {
-    if (num != num)
-    {
-      return true;
-    }
-    return false;
-  }
-
   var cell_maker = function (fluid, _x, _y) {
     var my = {};
     my.pressure = 0;
@@ -92,6 +84,7 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
     var m_prevBoundaryPotentials = [0,0,0,0,0,0,0,0];
     var m_addedBoundaryFlow = [0,0,0,0,0,0,0,0];
     var m_neighbors = [];  // CCW from East
+    var m_isBlocked = [];  // CCW from East
 
     function dotproduct(a,b) {
       var n = 0, lim = Math.min(a.length,b.length);
@@ -101,36 +94,29 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
 
     function isDirBlocked(dir)
     {
-      if (x == 0 && (dir == DIRS.W || dir == DIRS.NW || dir == DIRS.SW))
-      {
-          return true;
-      }
-      if (x == FLUID_CELLS_X - 1 && (dir = DIRS.E || dir == DIRS.NE || dir == DIRS.SE))
-      {
-          return true;
-      }
-      if (y == 0 && (dir == DIRS.N || dir == DIRS.NE || dir == DIRS.NW))
-      {
-          return true;
-      }
-      if (y == FLUID_CELLS_Y - 1 && (dir == DIRS.S || dir == DIRS.SE || dir == DIRS.SW))
-      {
-          return true;
-      }
-      return false;
+      return m_isBlocked[dir];
     }
 
     // public
 
     my.findNeighbors = function () {
-      m_neighbors[0] = fluid.grid[ Math.min(x+1, FLUID_CELLS_X-1)][y];                                           // Right
-      m_neighbors[1] = fluid.grid[ Math.min(x+1, FLUID_CELLS_X-1)][ Math.min(y+1, FLUID_CELLS_Y - 1)];                          // Right Top
-      m_neighbors[2] = fluid.grid[x][Math.min(y+1, FLUID_CELLS_Y - 1)];                                          // Top
-      m_neighbors[3] = fluid.grid[Math.max(0, x-1)][Math.min(y+1, FLUID_CELLS_Y - 1)];              // Left Top
-      m_neighbors[4] = fluid.grid[Math.max(0, x-1)][y];                               // Left
-      m_neighbors[5] = fluid.grid[Math.max(0, x-1)][ Math.max(0, y-1) ]; // Left bottom
-      m_neighbors[6] = fluid.grid[x][Math.max(0, y-1)];                             // Bottom
-      m_neighbors[7] = fluid.grid[Math.min(x+1, FLUID_CELLS_X-1)][Math.max(0, y-1)];             // Right Bottom
+      m_neighbors[DIRS.E]  = fluid.grid[ Math.min(x+1, FLUID_CELLS_X-1)][y];                                           // Right
+      m_neighbors[DIRS.NE] = fluid.grid[ Math.min(x+1, FLUID_CELLS_X-1)][ Math.min(y+1, FLUID_CELLS_Y - 1)];                          // Right Top
+      m_neighbors[DIRS.N]  = fluid.grid[x][Math.min(y+1, FLUID_CELLS_Y - 1)];                                          // Top
+      m_neighbors[DIRS.NW] = fluid.grid[Math.max(0, x-1)][Math.min(y+1, FLUID_CELLS_Y - 1)];              // Left Top
+      m_neighbors[DIRS.W]  = fluid.grid[Math.max(0, x-1)][y];                               // Left
+      m_neighbors[DIRS.SW] = fluid.grid[Math.max(0, x-1)][ Math.max(0, y-1) ]; // Left bottom
+      m_neighbors[DIRS.S]  = fluid.grid[x][Math.max(0, y-1)];                             // Bottom
+      m_neighbors[DIRS.SE] = fluid.grid[Math.min(x+1, FLUID_CELLS_X-1)][Math.max(0, y-1)];             // Right Bottom
+    
+      m_isBlocked[DIRS.E]  = (x === FLUID_CELLS_X-1);
+      m_isBlocked[DIRS.NE] = (x === FLUID_CELLS_X-1 && y === 0);
+      m_isBlocked[DIRS.N]  = (y === 0);
+      m_isBlocked[DIRS.NW] = (x === 0 && y == 0);
+      m_isBlocked[DIRS.W]  = (x === 0);
+      m_isBlocked[DIRS.SW] = (x === 0 && y == FLUID_CELLS_Y-1);
+      m_isBlocked[DIRS.S]  = (y == FLUID_CELLS_Y-1);
+      m_isBlocked[DIRS.SE] = (x === FLUID_CELLS_X-1 && y == FLUID_CELLS_Y-1);
     };
 
 
@@ -172,7 +158,10 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
     my.calculatePotentials = function () {
       for (var i = 0; i < 8; ++i)
       {
-        m_boundaryPotentials[i] = (my.pressure - m_neighbors[i].pressure) * 0.0625;
+        var other = m_neighbors[i];
+        if (isDirBlocked(i)) other = my;
+        
+        m_boundaryPotentials[i] = (my.pressure - other.pressure) * 0.0625;
         if (i % 2 == 1) // Diagonal
         {
           m_boundaryPotentials[i] *= 0.5;//*= INV_SQRT_TWO;
@@ -187,9 +176,7 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
 
         if (!isDirBlocked(i)) {
           m_neighbors[i].pressure =  m_neighbors[i].pressure + m_boundaryPotentials[i];
-          isNaNDebug(m_neighbors[i].pressure);
           my.pressure = my.pressure - m_boundaryPotentials[i];
-          isNaNDebug(my.pressure);
         }
 
         m_prevBoundaryPotentials[i] = m_boundaryPotentials[i];
@@ -205,7 +192,6 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
         if (isDirBlocked(i))
         {
           my.pressure = my.pressure + mag( vec );
-          isNaNDebug(my.pressure);
         }
         else {
           var dotVal = dotproduct(vec, dirVecs[i]);
@@ -255,7 +241,6 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
   function multiplyPressures( multiplier ) {
      applyToGrid( function(cell) {
        cell.pressure = multiplier * cell.pressure;
-       isNaNDebug(cell.pressure);
      });
   }
   
@@ -271,7 +256,6 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
     for (var x = 0; x < FLUID_CELLS_X; x++) {
       for (var y = 0; y < FLUID_CELLS_Y; y++) {
         my.grid[x][y].pressure = my.grid[x][y].pressure + pressureAdjuster;
-        isNaNDebug(my.grid[x][y].pressure);
       }
     }
   }
@@ -346,81 +330,24 @@ var fluid_maker = function (FLUID_CELLS_X, FLUID_CELLS_Y) {
     }
   };
   
-  function fmod (x, y) {
-    // Returns the remainder of dividing x by y as a float  
-    // 
-    // version: 1109.2015
-    // discuss at: http://phpjs.org/functions/fmod
-    // +   original by: Onno Marsman
-    // +      input by: Brett Zamir (http://brett-zamir.me)
-    // +   bugfixed by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // *     example 1: fmod(5.7, 1.3);
-    // *     returns 1: 0.5
-    var tmp, tmp2, p = 0,
-    pY = 0,
-    l = 0.0,
-    l2 = 0.0;
-
-    tmp = x.toExponential().match(/^.\.?(.*)e(.+)$/);
-    p = parseInt(tmp[2], 10) - (tmp[1] + '').length;
-    tmp = y.toExponential().match(/^.\.?(.*)e(.+)$/);
-    pY = parseInt(tmp[2], 10) - (tmp[1] + '').length;
-
-    if (pY > p) {
-      p = pY;
-    }
-
-    tmp2 = (x % y);
-
-    if (p < -100 || p > 20) {
-      // toFixed will give an out of bound error so we fix it like this:
-      l = Math.round(Math.log(tmp2) / Math.log(10));
-      l2 = Math.pow(10, l);
-
-      return (tmp2 / l2).toFixed(l - p) * l2;
-    } else {
-      return parseFloat(tmp2.toFixed(-p));
-    }
-  }
-  
   my.sampleFlow = function ( x, y ) {
-    var sampleX = (x+1) * FLUID_CELLS_X;
-    while (sampleX > FLUID_CELLS_X) {
-      sampleX = sampleX - FLUID_CELLS_X;
-    }
     
+    //var sampleX = Math.max(0, Math.min(x, 0.999999999999)) * FLUID_CELLS_X;
+    //var sampleY = Math.max(0, Math.min(y, 0.999999999999)) * FLUID_CELLS_Y;
+    // It looks like individual bounds tests are faster than Math.min/max
+    
+    var sampleX = x * FLUID_CELLS_X;
+    var sampleY = y * FLUID_CELLS_Y;
+    if (sampleX >= FLUID_CELLS_X) sampleX -= FLUID_CELLS_X;
+    if (sampleX < 0) sampleX = 0;
+    if (sampleY >= FLUID_CELLS_Y) sampleY -= FLUID_CELLS_Y;
+    if (sampleY < 0) sampleY = 0;
     
     var baseX = Math.floor(sampleX);
     var fracX = sampleX - baseX;
     
-    var sampleY = (y+1) * FLUID_CELLS_Y;
-    while (sampleY > FLUID_CELLS_Y) {
-      sampleY = sampleY - FLUID_CELLS_Y;
-    }
-    
     var baseY = Math.floor(sampleY);
     var fracY = sampleY - baseY;
-    
-    if (y != y || x != x)
-    {
-      var isNAN = true;
-    }
-    
-    //console.debug(  "x: " + x);
-    //console.debug(  "y: " + y);
-
-    //console.debug(  "baseX: " + (baseX+1)%FLUID_CELLS_X );
-    //console.debug(  "baseY: " + (baseY+1)%FLUID_CELLS_Y );
-    
-    if (baseX < 0 || baseY < 0 || baseX >= FLUID_CELLS_X || baseY >= FLUID_CELLS_Y)
-    {
-      var NO1 = true;
-    }
-    var obj = my.grid[baseX][baseY];
-    if (!obj)
-    {
-      var NO = true;
-    }
     
     return [ my.grid[baseX][baseY].flow[0] * (1.0 - fracX) + my.grid[(baseX+1)%FLUID_CELLS_X][baseY].flow[0] * fracX,
              my.grid[baseX][baseY].flow[1] * (1.0 - fracY) + my.grid[baseX][(baseY+1)%FLUID_CELLS_Y].flow[1] * fracY ];
