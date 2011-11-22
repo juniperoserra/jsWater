@@ -150,10 +150,7 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
 
   my.idle = function (currentTime) {
     if (currentTime - lastIdleTime >= MIN_UPDATE_INTERVAL) {
-      fluid.step();
-      //    printf("Update took: %d\n", currentTime - lastIdleTime);
-      lastIdleTime = currentTime;
-
+      
       if (drawParticles) {
         for (var i = 0; i < particlesArrayLen; i = i + 4) {
           var redeploy = (particles[i+X1] >= 1) || (particles[i+X1] < 0) || (particles[i+Y1] >= 1) || (particles[i+Y1] < 0) ||
@@ -182,17 +179,26 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
             particles[i+X0] = particles[i+X1];
             particles[i+Y0] = particles[i+Y1];
             
-            //particleFlows[i+X0] = particleFlows[i+X1];
-            //particleFlows[i+Y0] = particleFlows[i+Y1];
+            particleFlows[i+X0] = particleFlows[i+X1];
+            particleFlows[i+Y0] = particleFlows[i+Y1];
 
-            var flow0 = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
-            particles[i+X1] = particles[i+X1] + flow0[0] / particleMasses[i/4];
-            particles[i+Y1] = particles[i+Y1] + flow0[1] / particleMasses[i/4];
+            //var flow0 = fluid.sampleFlow(particles[i+X0], particles[i+Y0]);
+            particles[i+X1] = particles[i+X1] + particleFlows[i+X0]; //flow0[0] / particleMasses[i/4];
+            particles[i+Y1] = particles[i+Y1] + particleFlows[i+Y0]; //flow0[1] / particleMasses[i/4];
             
-            var flow1 = fluid.sampleFlow(particles[i+X1], particles[i+Y1]);
-            particleFlows[i+X1] = flow1[0] / particleMasses[i/4];
-            particleFlows[i+Y1] = flow1[1] / particleMasses[i/4];
           }
+        }
+      }
+      
+      fluid.step();
+      //    printf("Update took: %d\n", currentTime - lastIdleTime);
+      lastIdleTime = currentTime;
+      
+      if (drawParticles) {
+        for (var i = 0; i < particlesArrayLen; i = i + 4) {
+          var flow1 = fluid.sampleFlow(particles[i+X1], particles[i+Y1]);
+          particleFlows[i+X1] = flow1[0] / particleMasses[i/4];
+          particleFlows[i+Y1] = flow1[1] / particleMasses[i/4];
         }
       }
     }
@@ -219,7 +225,6 @@ var fluid_app_maker = function ( context, N_PARTICLES, xCells, xCells, width, he
           (avgX + midX / 4) * W, (avgY + midY / 4) * H,
           particles[i+X1] * W, particles[i+Y1] * H
         );
-        
       }
       
       var hue = hue + 10 * Math.random();
