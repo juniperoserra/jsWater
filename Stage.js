@@ -1,11 +1,13 @@
 /**
  * jsWater pressure-based fluid simulation
  * http://www.upfork.com/
- * Copyright 2011, Simon Greenwold
+ * Simon Greenwold
+ *
+ * Some code taken from  KineticJS 2d JavaScript Library v1.0.3
+ * http://www.kineticjs.com/
+ * Copyright 2011, Eric Rowell
  * Licensed under the MIT or GPL Version 2 licenses.
  * Date: November 3 2011
- *
- * Copyright (C) 2011 by Simon Greenwold
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,35 +27,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- 
-// Stage class adapted (cribbed) from  KineticJS 2d JavaScript Library v1.0.3
-// http://www.kineticjs.com/
-// by Eric Rowell
+
 
 var Stage = function(canvasId) {
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
     this.drawStage = undefined;
-    this.listening = false;
 
     // desktop flags
     this.mousePos = null;
-    this._mouseDown = false;
-    this._mouseUp = false;
-    this._mouseOver = false;
-    this._mouseMove = false;
 
     // mobile flags
     this.touchPos = null;
-    this._touchStart = false;
-    this._touchMove = false;
-    this._touchEnd = false;
-
-    // Region Events
-    this._currentRegion = null;
-    this._regionIndex = 0;
-    this._lastRegionIndex = -1;
-    this._mouseOverRegionIndex = -1;
 
     // Animation
     this.t = 0;
@@ -62,8 +47,6 @@ var Stage = function(canvasId) {
     this.lastTime = 0;
     this.frame = 0;
     this.animating = false;
-    
-    this.mouseDown = false;
 
     // provided by Paul Irish says Eric Rowell
     window.requestAnimFrame = (function(callback) {
@@ -108,88 +91,19 @@ Stage.prototype.getCanvasPos = function() {
 Stage.prototype._drawStage = function() {
     if(this.drawStage !== undefined) {
         this.drawStage();
-
-        // desktop flags
-        this._mouseOver = false;
-        this._mouseMove = false;
-        this._mouseDown = false;
-        this._mouseUp = false;
-
-        // mobile touch flags
-        this._touchStart = false;
-        this._touchMove = false;
-        this._touchEnd = false;
     }
 };
 
 Stage.prototype.setDrawStage = function(func) {
-    this.drawStage = func;
-    this.listen();
-};
-
-// ======================================= CANVAS EVENTS
-
-Stage.prototype.handleEvent = function(evt) {
-    if(!evt) {
-        evt = window.event;
-    }
-
-    this.setMousePosition(evt);
-    this.setTouchPosition(evt);
-    this._regionIndex = 0;
-
-    if(!this.animating) {
-        this._drawStage();
-    }
-};
-
-Stage.prototype.listen = function() {
     var that = this;
-    this._drawStage();
-
-    // desktop events
-    this.canvas.addEventListener("mousedown", function(evt) {
-        that._mouseDown = true;
-        that.mouseDown = true;
-        that.handleEvent(evt);
-    }, false);
-
+    this.drawStage = func;
     this.canvas.addEventListener("mousemove", function(evt) {
-        that.handleEvent(evt);
+        that.setMousePosition(evt);
     }, false);
-
-    this.canvas.addEventListener("mouseup", function(evt) {
-        that._mouseUp = true;
-        that.mouseDown = false;
-        that.handleEvent(evt);
-    }, false);
-
-    this.canvas.addEventListener("mouseover", function(evt) {
-        that.handleEvent(evt);
-    }, false);
-
-    this.canvas.addEventListener("mouseout", function(evt) {
-        that.mousePos = null;
-    }, false);
-
-    // mobile events
-    this.canvas.addEventListener("touchstart", function(evt) {
-        evt.preventDefault();
-        that._touchStart = true;
-        that.handleEvent(evt);
-    }, false);
-
     this.canvas.addEventListener("touchmove", function(evt) {
         evt.preventDefault();
-        that.handleEvent(evt);
+        that.setTouchPosition(evt);
     }, false);
-
-    this.canvas.addEventListener("touchend", function(evt) {
-        evt.preventDefault();
-        that._touchEnd = true;
-        that.handleEvent(evt);
-    }, false);
-
 };
 
 Stage.prototype.getMousePos = function(evt) {
@@ -224,84 +138,6 @@ Stage.prototype.setTouchPosition = function(evt) {
     }
 };
 
-Stage.prototype.isMouseDown = function() {
-    return this.mouseDown;  
-};
-
-// ======================================= REGION EVENTS
-
-Stage.prototype.beginRegion = function() {
-    this._currentRegion = {};
-    this._regionIndex++;
-};
-
-Stage.prototype.addRegionEventListener = function(type, func) {
-    var event = (type.indexOf('touch') == -1) ? 'on' + type : type;
-    this._currentRegion[event] = func;
-};
-
-Stage.prototype.closeRegion = function() {
-    var pos = this.touchPos || this.mousePos;
-
-    if(pos !== null && this.context.isPointInPath(pos.x, pos.y)) {
-        if(this._lastRegionIndex != this._regionIndex) {
-            this._lastRegionIndex = this._regionIndex;
-        }
-
-        // handle onmousedown
-        if(this._mouseDown && this._currentRegion.onmousedown !== undefined) {
-            this._currentRegion.onmousedown();
-            this._mouseDown = false;
-        }
-
-        // handle onmouseup
-        else if(this._mouseUp && this._currentRegion.onmouseup !== undefined) {
-            this._currentRegion.onmouseup();
-            this._mouseUp = false;
-        }
-
-        // handle onmouseover
-        else if(!this._mouseOver && this._regionIndex != this._mouseOverRegionIndex && this._currentRegion.onmouseover !== undefined) {
-            this._currentRegion.onmouseover();
-            this._mouseOver = true;
-            this._mouseOverRegionIndex = this._regionIndex;
-        }
-
-        // handle onmousemove
-        else if(!this._mouseMove && this._currentRegion.onmousemove !== undefined) {
-            this._currentRegion.onmousemove();
-            this._mouseMove = true;
-        }
-
-        // handle touchstart
-        if(this._touchStart && this._currentRegion._touchStart !== undefined) {
-            this._currentRegion._touchStart();
-            this._touchStart = false;
-        }
-
-        // handle touchend
-        if(this._touchEnd && this._currentRegion._touchEnd !== undefined) {
-            this._currentRegion._touchEnd();
-            this._touchEnd = false;
-        }
-
-        // handle touchmove
-        if(!this._touchMove && this._currentRegion._touchMove !== undefined) {
-            this._currentRegion._touchMove();
-            this._touchMove = true;
-        }
-
-    }
-    else if(this._regionIndex == this._lastRegionIndex) {
-        this._lastRegionIndex = -1;
-        this._mouseOverRegionIndex = -1;
-
-        // handle mouseout condition
-        if(this._currentRegion.onmouseout !== undefined) {
-            this._currentRegion.onmouseout();
-        }
-    }
-};
 
 // ======================================= ANIMATION
 // =======================================

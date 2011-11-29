@@ -38,28 +38,10 @@
   var avgFps = 0;
   var dragTracker = create_drag_tracker("myCanvas");
   var jswater = {};
-  
-  // globals needed for drag and drop
-  var dd = {
-    mouseX: 0,
-    mouseY: 0,
-    lastMouseX: 0,
-    lastMouseY: 0,
-    isDragging: false
-  };
-
-  canvas.addEventListener("mouseup", function() {
-    dd.isDragging = false;
-    //dd.mouseOffsetX = 0;
-    //dd.mouseOffsetY = 0;
-    }, false);
     
   canvas.addEventListener("mousedown", function() {
-    dd.isDragging = true;
     var mousePos = stage.getMousePos();
     fluidApp.mouseDown(mousePos.x / width, mousePos.y / height, 0, 0);
-    //dd.mouseOffsetX = 0;
-    //dd.mouseOffsetY = 0;
     }, false);
 
   stage.setDrawStage(function() {
@@ -70,7 +52,7 @@
       fluidApp.mouseDrag( mousePos.x / width, mousePos.y / height, 0 );
     }
 
-    // update ball
+    // update fluid
     var d = new Date();
     fluidApp.idle(d.getTime());
 
@@ -84,7 +66,7 @@
       displayFps = avgFps.toFixed(1);
     }
 
-    // draw ball
+    // draw fluid
     fluidApp.draw();
     if (jswater.showFps)
     {
